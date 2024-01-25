@@ -5,17 +5,18 @@ class apiError extends Error {
     statusCode,
     massage = "Somthing wants wrong",
     error = [],
-    statck
+    statck = ""
   ) {
     super(massage);
     this.statusCode = statusCode;
+    this.massage = massage;
     this.data = null;
     this.error = error;
     this.success = false;
     //TODO:
     // ata bujta hob pora amy
-    if (statck) {
-      this.stack = statck;
+    if (stack) {
+      this.stack = stack;
     } else {
       Error.captureStackTrace(this, this.constructor);
     }
