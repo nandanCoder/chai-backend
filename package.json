@@ -1,0 +1,16 @@
+{
+  "name": "chai_or_backend",
+  "version": "1.0.0",
+  "description": "a backend at chai aur code chanal",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "javaScript",
+    "Backend",
+    "chai"
+  ],
+  "author": "NandanManna",
+  "license": "ISC"
+}
