@@ -5,7 +5,7 @@ class apiError extends Error {
     statusCode,
     massage = "Somthing wants wrong",
     error = [],
-    statck = ""
+    stack = ""
   ) {
     super(massage);
     this.statusCode = statusCode;
@@ -22,3 +22,5 @@ class apiError extends Error {
     }
   }
 }
+
+export { apiError };
