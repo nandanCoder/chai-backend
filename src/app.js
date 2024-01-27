@@ -14,7 +14,7 @@ app.use(
 app.use(express.json({ limit: "16kb" }));
 app.use(express.urlencoded({ extended: true, limit: "16kb" }));
 app.use(express.static("public"));
-app.use(cookieParser());
+app.use(cookieParser()); // ami maj mkane cooke acsec korta par6i sob jay gay
 
 // routes
 

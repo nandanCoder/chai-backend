@@ -3,6 +3,27 @@ import { apiError } from "../utils/apiError.js";
 import { User } from "../models/user.models.js"; // ai mongo db sata i kotha bol ba ar bar bar kotha boll ba ok
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { apiResponse } from "../utils/apiResponse.js";
+
+const generateAccessTokenAndRefreshToken = async (userId) => {
+  try {
+    const user = await User.findById(userId);
+
+    const accessToken = user.generateAccessToken();
+    const refreshToken = user.generateRefreshToken();
+
+    user.refreshToken = refreshToken;
+    await user.save({
+      validateBeforeSave: false, // ami abr validation chi na mana mongose a ja ja fild requard a6a sa gula ami abar dita chi na sudu ata save korta chi ok thats good
+    });
+    return { accessToken, refreshToken };
+  } catch (error) {
+    throw new apiError(
+      500,
+      "Somthing  while wrong generating accessToken and refreshToken"
+    );
+  }
+};
+
 const registerUser = asyncHandler(async (req, res) => {
   //1 get user details from frontend
   //2 validation  - not emty
@@ -83,4 +104,89 @@ const registerUser = asyncHandler(async (req, res) => {
     .json(new apiResponse(200, createdUser, "User registered Successfully"));
 });
 
-export { registerUser };
+const loginUser = asyncHandler(async (req, res) => {
+  // req body -> data
+  // username or email
+  // find the user
+  // chack password
+  // access and refreshToken
+  // send cookis
+
+  const { email, username, password } = req.body;
+
+  if (!username && !email) {
+    throw new apiError(400, "username and email are required");
+  }
+  const user = await User.findOne({
+    $or: [{ username }, { email }],
+  });
+  if (!user) {
+    throw new apiError(404, "User does not exist");
+  }
+
+  const isPasswordValid = await user.isPasswordCurrect(password);
+  if (!isPasswordValid) {
+    throw new apiError(401, "Invalid password:: Invalid user credentials");
+  }
+
+  // call the mathod
+
+  const { accessToken, refreshToken } =
+    await generateAccessTokenAndRefreshToken(user._id);
+  const loggedInUser = await User.findById(user._id).select(
+    "-password -refreshToken"
+  );
+
+  //- TODO: are call korbo na data base ka
+  //const finalUser = user.refreshToken = refreshToken
+
+  // now send this in cookis
+
+  const options = {
+    httpOnly: true,
+    secure: true,
+  };
+
+  return res
+    .status(200)
+    .cookie("accessToken", accessToken, options)
+    .cookie("refreshToken", refreshToken, options)
+    .json(
+      new apiResponse(
+        200,
+        {
+          user: loggedInUser,
+          accessToken,
+          refreshToken,
+        },
+        "User logged in successfully||"
+      )
+    );
+});
+
+const logoutUser = asyncHandler(async (req, res) => {
+  // akane user ar access nai karon logout ar somay toemil daoa jaba na
+  // middleware injak kora dia6i tai pia ga6i
+  await User.findByIdAndUpdate(
+    req.user._id,
+    {
+      $set: {
+        refreshToken: undefined,
+      },
+    },
+    {
+      new: true,
+    }
+  );
+  const options = {
+    httpOnly: true,
+    secure: true,
+  };
+  return res
+    .status(200)
+    .clearCookie("accessToken", options)
+    .clearCookie("refreshToken", options)
+    .json(new apiResponse(200, {}, "User loged out successfully"));
+});
+
+export { registerUser, loginUser, logoutUser };
