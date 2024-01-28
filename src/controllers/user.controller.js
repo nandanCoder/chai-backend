@@ -347,6 +347,86 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
     .jason(new apiResponse(200, user, "Cover Image Updated Successfully"));
 });
 
+// Aggregation Pipeline Example
+//The following aggregation pipeline example contains two stages and returns the total order quantity .
+
+const getUserChannlProfile = asyncHandler(async (req, res) => {
+  const { userName } = req.params;
+  if (!userName?.trim()) {
+    throw new apiError(400, "userNAme is missing");
+  }
+  const channel = await User.aggregate([
+    {
+      $match: {
+        // meatch kora6a data
+        userName: userName?.toLowerCase(),
+      },
+    },
+    {
+      $lookup: {
+        // ono fold a gia match kor6a
+        from: "subscriptions", // ja fild ta matech korate chi sata kotaya6a ta akane
+
+        localField: "_id", // local fild
+
+        foreignField: "channel", // ja fild take match korate chi
+        as: "subscribers",
+      },
+    },
+    {
+      $lookup: {
+        from: "subscriptions",
+        localField: "_id",
+        foreignField: "subscriber",
+        as: "subscribedTo",
+      },
+    },
+    {
+      $addFields: {
+        // user object a new fild add kora ho6a
+
+        subscribersCount: {
+          $size: "$subscribers",
+        },
+        channelsSubscribedToCount: {
+          $size: "$subscribedTo",
+        },
+        isSubscribed: {
+          $condition: {
+            if: {
+              // condition for chaking amar id ta ar modha a6a ki na
+
+              $in: [req.user?._id, "$subscribers.subscriber"],
+              then: true,
+              else: false,
+            },
+          },
+        },
+      },
+    },
+    {
+      $project: {
+        //| ja j avlue return korta chi
+
+        fullName: 1,
+        avater: 1,
+        coverImage: 1,
+        username: 1,
+        subscribersCount: 1,
+        channelsSubscribedToCount: 1,
+        isSubscribed: 1,
+        email: 1,
+      },
+    },
+  ]);
+  console.log(channel);
+
+  if(!channel.length()){
+    throw new apiError(404,"Channel does not exist")
+  }
+  return res.status(200).jason( new apiResponse(200,channel[0],"User Chanal featched Successfully"))
+});
+
 export {
   registerUser,
   loginUser,
@@ -357,4 +437,6 @@ export {
   updatAccountDetails,
   updateUserAvatar,
   updateUserCoverImage,
+  getUserChannlProfile,
+  getUserChannlProfile,
 };
