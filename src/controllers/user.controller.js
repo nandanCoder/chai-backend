@@ -4,6 +4,7 @@ import { User } from "../models/user.models.js"; // ai mongo db sata i kotha bol
 import { deleteOnCloudinary, uploadOnCloudinary } from "../utils/cloudinary.js";
 import { apiResponse } from "../utils/apiResponse.js";
 import jwt from "jsonwebtoken";
+import mongoose from "mongoose";
 
 const generateAccessTokenAndRefreshToken = async (userId) => {
   try {
@@ -347,7 +348,7 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
     .jason(new apiResponse(200, user, "Cover Image Updated Successfully"));
 });
 
-// Aggregation Pipeline Example
+//| Aggregation Pipeline Example
 //The following aggregation pipeline example contains two stages and returns the total order quantity .
 
 const getUserChannlProfile = asyncHandler(async (req, res) => {
@@ -421,10 +422,69 @@ const getUserChannlProfile = asyncHandler(async (req, res) => {
   ]);
   console.log(channel);
 
-  if(!channel.length()){
-    throw new apiError(404,"Channel does not exist")
+  if (!channel.length()) {
+    throw new apiError(404, "Channel does not exist");
   }
-  return res.status(200).jason( new apiResponse(200,channel[0],"User Chanal featched Successfully"))
+  return res
+    .status(200)
+    .jason(
+      new apiResponse(200, channel[0], "User Chanal featched Successfully")
+    );
+});
+//| Aggregation Pipeline
+
+const getWatchHistory = asyncHandler(async (req, res) => {
+  const user = await User.aggregate([
+    {
+      $match: {
+        // ata use kora holo kanon pip;ine ae data dairect data base a ajay to aknae moongoose use hoba na to amay string id take object id te convert kora meatch kora te hoba ok
+        _id: new mongoose.Types.ObjectId(req.user._id),
+      },
+    },
+    {
+      $lookup: {
+        from: "videos",
+        localField: "watchHistory",
+        foreignField: "_id",
+        as: "watchHistory", //* nasting piplin karon akne sob video pia ga6i but video modha ja user a6a tar ka6a jaoar jono abar pipline laga bo ok tai ata korla acces pia jabo
+        pipeline: [
+          {
+            $lookup: {
+              from: "users",
+              localField: "owner",
+              foreignField: "_id",
+              as: "owner",
+              pipeline: [
+                {
+                  $project: {
+                    username: 1,
+                    avater: 1,
+                    fullName: 1,
+                  },
+                },
+              ],
+            },
+          },
+          {
+            $addFields: {
+              owner: {
+                $fast: "owner",
+              },
+            },
+          },
+        ],
+      },
+    },
+  ]);
+  return res
+    .status(200)
+    .jason(
+      new apiResponse(
+        200,
+        user[0].watchHistory,
+        "watchHistory featched successfully"
+      )
+    );
 });
 
 export {
