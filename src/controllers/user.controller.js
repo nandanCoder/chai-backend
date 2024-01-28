@@ -1,7 +1,7 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { apiError } from "../utils/apiError.js";
 import { User } from "../models/user.models.js"; // ai mongo db sata i kotha bol ba ar bar bar kotha boll ba ok
-import { uploadOnCloudinary } from "../utils/cloudinary.js";
+import { deleteOnCloudinary, uploadOnCloudinary } from "../utils/cloudinary.js";
 import { apiResponse } from "../utils/apiResponse.js";
 import jwt from "jsonwebtoken";
 
@@ -295,6 +295,10 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
     throw new apiError(400, "Avater file not uploded");
   }
 
+  const oldUser = await User.findById(req.user._id);
+
+  await deleteOnCloudinary(oldUser.avater);
+
   const user = await User.findByIdAndUpdate(
     req.user?._id,
     {
@@ -313,7 +317,6 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
     .status(200)
     .json(new apiResponse(200, user, "Avater updated successfully"));
 });
-//* TODO: create update  cover poto funcation
 
 const updateUserCoverImage = asyncHandler(async (req, res) => {
   const coverImageLocalPath = req.file?.path;
@@ -324,6 +327,9 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
   if (!coverImage) {
     throw new apiError(400, "Internaal Surver Error");
   }
+  const oldUser = await User.findById(req.user._id);
+  await deleteOnCloudinary(oldUser.coverImage);
+
   const user = await User.findByIdAndUpdate(
     req.body._id,
     {
