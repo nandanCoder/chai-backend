@@ -234,4 +234,121 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
   }
 });
 
-export { registerUser, loginUser, logoutUser, refreshAccessToken };
+const changeCurrentPassword = asyncHandler(async (req, res) => {
+  const { oldPassword, newPassword } = req.body;
+  const user = await User.findById(req.body._id);
+
+  const isPasswordCurrect = await user.isPasswordCurrect(oldPassword);
+  if (!isPasswordCurrect) {
+    throw new apiError(400, "Invalid oldPassword");
+  }
+  user.password = newPassword;
+  await user.save({
+    validateBeforeSave: false,
+  });
+  return res
+    .status(200)
+    .json(new apiResponse(200, {}, "Password updated successfully"));
+});
+
+const getCurrentUser = asyncHandler(async (req, res) => {
+  //const user = await User.findById(req.user?._id);
+
+  return res
+    .status(200)
+    .json(new apiResponse(200, req.body, "Current user featched successfully"));
+});
+
+const updatAccountDetails = asyncHandler(async (req, res) => {
+  const { fullName, email } = req.body;
+  if (!fullName || !email) {
+    throw new apiError(400, " All fields must be required");
+  }
+  const user = await User.findByIdAndUpdate(
+    req.user?._id,
+    {
+      $set: {
+        fullName: fullName,
+        email: email,
+      },
+    },
+    { new: true }
+  ).select("-password"); // chaning ak bara sob set hoa jabe karon basi data base call chi na
+
+  if (!user) {
+    throw new apiError(404, " Fullname and email not change Internaal issu ");
+  }
+
+  return res
+    .status(200)
+    .json(new apiResponse(200, user, "User Data Change Success fully"));
+});
+
+const updateUserAvatar = asyncHandler(async (req, res) => {
+  const avaterLocalPath = req.file?.path;
+
+  if (!avaterLocalPath) {
+    throw new apiError(400, "Avater file is missing");
+  }
+  const avater = uploadOnCloudinary(avaterLocalPath);
+  if (!avater) {
+    throw new apiError(400, "Avater file not uploded");
+  }
+
+  const user = await User.findByIdAndUpdate(
+    req.user?._id,
+    {
+      $set: {
+        avater: avater.url,
+      },
+    },
+    { new: true }
+  ).select("-password");
+
+  if (!user) {
+    throw new apiError(404, " Avater not updated Successfully");
+  }
+
+  return res
+    .status(200)
+    .json(new apiResponse(200, user, "Avater updated successfully"));
+});
+//* TODO: create update  cover poto funcation
+
+const updateUserCoverImage = asyncHandler(async (req, res) => {
+  const coverImageLocalPath = req.file?.path;
+  if (!coverImageLocalPath) {
+    throw new apiError(400, "coverImage must be requard");
+  }
+  const coverImage = await uploadOnCloudinary(coverImageLocalPath);
+  if (!coverImage) {
+    throw new apiError(400, "Internaal Surver Error");
+  }
+  const user = await User.findByIdAndUpdate(
+    req.body._id,
+    {
+      $set: {
+        coverImage: coverImage.url,
+      },
+    },
+    { new: true }
+  ).select("-password");
+  if (!user) {
+    throw new apiError(404, "Internaal Surver Error");
+  }
+  return res
+    .status(200)
+    .jason(new apiResponse(200, user, "Cover Image Updated Successfully"));
+});
+
+export {
+  registerUser,
+  loginUser,
+  logoutUser,
+  refreshAccessToken,
+  changeCurrentPassword,
+  getCurrentUser,
+  updatAccountDetails,
+  updateUserAvatar,
+  updateUserCoverImage,
+};
