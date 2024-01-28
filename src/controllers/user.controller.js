@@ -3,6 +3,7 @@ import { apiError } from "../utils/apiError.js";
 import { User } from "../models/user.models.js"; // ai mongo db sata i kotha bol ba ar bar bar kotha boll ba ok
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { apiResponse } from "../utils/apiResponse.js";
+import jwt from "jsonwebtoken";
 
 const generateAccessTokenAndRefreshToken = async (userId) => {
   try {
@@ -189,4 +190,48 @@ const logoutUser = asyncHandler(async (req, res) => {
     .json(new apiResponse(200, {}, "User loged out successfully"));
 });
 
-export { registerUser, loginUser, logoutUser };
+const refreshAccessToken = asyncHandler(async (req, res) => {
+  const incomingRefrshToken = req.cookies.refreshToken || req.body.refreshToken;
+  if (!incomingRefrshToken) {
+    throw new apiError(403, "Unauthenticated access token requst");
+  }
+  try {
+    const decodedToken = jwt.verify(
+      incomingRefrshToken.process.env.REFRESH_TOKEN_SECRET
+    );
+    const user = await User.findById(decodedToken?._id);
+
+    if (!user) {
+      throw new apiError(401, "Invalid refresh token");
+    }
+    if (incomingRefrshToken !== user.refreshToken) {
+      throw new apiError(401, "refresh Token  is expiry or used");
+    }
+
+    const options = {
+      httpOnly: true,
+      secure: true,
+    };
+    const { accessToken, newRefreshToken } =
+      await generateAccessTokenAndRefreshToken(user._id);
+
+    return res
+      .status(200)
+      .cookie("accessToken", accessToken, options)
+      .cookie("refreshToken", newRefreshToken, options)
+      .json(
+        new apiResponse(
+          200,
+          {
+            accessToken,
+            refreshToken: newRefreshToken,
+          },
+          "AccessToken generated successfully"
+        )
+      );
+  } catch (error) {
+    throw new apiError(401, error.message || "Invilid access token");
+  }
+});
+
+export { registerUser, loginUser, logoutUser, refreshAccessToken };
