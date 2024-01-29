@@ -1,6 +1,6 @@
 import { v2 as cloudinary } from "cloudinary";
 import fs from "fs";
-import { apiError } from "./apiError";
+import { apiError } from "./apiError.js";
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -25,10 +25,9 @@ const uploadOnCloudinary = async (localFilePath) => {
   }
 };
 
-const deleteOnCloudinary = async (publicFilePath) => {
+const deleteOnCloudinary = async (public_id) => {
   try {
-    await cloudinary.uploader.destroy(publicFilePath);
-    return true;
+    return await cloudinary.uploader.destroy(public_id);
   } catch (error) {
     throw new apiError(404, " Preves Image Not Remove Successfully");
   }

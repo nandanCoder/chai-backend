@@ -35,18 +35,18 @@ router.route("/login").post(loginUser);
 
 // secured route
 
-router.route("/logout").post(varifyJWT, logoutUser);
-router.route("/refresh-token").post(refreshAccessToken);
-router.route("/change-password").post(varifyJWT, changeCurrentPassword);
-router.route("current-user").get(varifyJWT, getCurrentUser);
-router.route("/update-acount").patch(varifyJWT, updatAccountDetails);
+router.route("/logout").post(varifyJWT, logoutUser); // done
+router.route("/refresh-token").post(refreshAccessToken); // done
+router.route("/change-password").post(varifyJWT, changeCurrentPassword); // done
+router.route("/current-user").get(varifyJWT, getCurrentUser); // done
+router.route("/update-acount").patch(varifyJWT, updatAccountDetails); // done
 router
   .route("/update-avater")
-  .post(varifyJWT, upload.single("avater"), updateUserAvatar);
+  .post(varifyJWT, upload.single("avater"), updateUserAvatar); // done
 router
   .route("/update-coverImage")
-  .post(varifyJWT, upload.single("coverImage"), updateUserCoverImage);
-router.route("/channel/:userName").get(varifyJWT, getUserChannlProfile);
-router.route("/weatchHistory").get(varifyJWT, getWatchHistory);
+  .post(varifyJWT, upload.single("coverImage"), updateUserCoverImage); // done
+router.route("/channel/:userName").get(getUserChannlProfile); //done
+router.route("/weatchHistory").get(varifyJWT, getWatchHistory); //done
 
 export default router;

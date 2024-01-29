@@ -87,7 +87,9 @@ const registerUser = asyncHandler(async (req, res) => {
   const user = await User.create({
     fullName,
     avater: avater.url,
+    avaterPublic_id: avater.public_id || "",
     coverImage: coverImage?.url || "",
+    coverImagePublic_id: coverImage.public_id || "",
     email,
     password,
     username: username.toLowerCase(),
@@ -198,7 +200,8 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
   }
   try {
     const decodedToken = jwt.verify(
-      incomingRefrshToken.process.env.REFRESH_TOKEN_SECRET
+      incomingRefrshToken,
+      process.env.REFRESH_TOKEN_SECRET
     );
     const user = await User.findById(decodedToken?._id);
 
@@ -237,10 +240,10 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
 
 const changeCurrentPassword = asyncHandler(async (req, res) => {
   const { oldPassword, newPassword } = req.body;
-  const user = await User.findById(req.body._id);
+  const user = await User.findById(req.user?._id);
 
-  const isPasswordCurrect = await user.isPasswordCurrect(oldPassword);
-  if (!isPasswordCurrect) {
+  const passwordIsCurrect = await user.isPasswordCurrect(oldPassword);
+  if (!passwordIsCurrect) {
     throw new apiError(400, "Invalid oldPassword");
   }
   user.password = newPassword;
@@ -254,10 +257,10 @@ const changeCurrentPassword = asyncHandler(async (req, res) => {
 
 const getCurrentUser = asyncHandler(async (req, res) => {
   //const user = await User.findById(req.user?._id);
-
+  //console.log(req.body);
   return res
     .status(200)
-    .json(new apiResponse(200, req.body, "Current user featched successfully"));
+    .json(new apiResponse(200, req.user, "Current user featched successfully"));
 });
 
 const updatAccountDetails = asyncHandler(async (req, res) => {
@@ -291,14 +294,16 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
   if (!avaterLocalPath) {
     throw new apiError(400, "Avater file is missing");
   }
-  const avater = uploadOnCloudinary(avaterLocalPath);
+  const avater = await uploadOnCloudinary(avaterLocalPath);
   if (!avater) {
     throw new apiError(400, "Avater file not uploded");
   }
+  //console.log(avater);
 
-  const oldUser = await User.findById(req.user._id);
+  const oldUser = await User.findById(req.user?._id);
 
-  await deleteOnCloudinary(oldUser.avater);
+  await deleteOnCloudinary(oldUser.avaterPublic_id);
+  //console.log("Deleted Successfully", deletedSuccessfully);
 
   const user = await User.findByIdAndUpdate(
     req.user?._id,
@@ -329,7 +334,7 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
     throw new apiError(400, "Internaal Surver Error");
   }
   const oldUser = await User.findById(req.user._id);
-  await deleteOnCloudinary(oldUser.coverImage);
+  await deleteOnCloudinary(oldUser.coverImageLocalPath);
 
   const user = await User.findByIdAndUpdate(
     req.body._id,
@@ -353,6 +358,7 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
 
 const getUserChannlProfile = asyncHandler(async (req, res) => {
   const { userName } = req.params;
+  console.log(userName);
   if (!userName?.trim()) {
     throw new apiError(400, "userNAme is missing");
   }
@@ -393,14 +399,13 @@ const getUserChannlProfile = asyncHandler(async (req, res) => {
           $size: "$subscribedTo",
         },
         isSubscribed: {
-          $condition: {
+          $cond: {
+            // condition for chaking amar id ta ar modha a6a ki na
             if: {
-              // condition for chaking amar id ta ar modha a6a ki na
-
               $in: [req.user?._id, "$subscribers.subscriber"],
-              then: true,
-              else: false,
             },
+            then: true,
+            else: false,
           },
         },
       },
@@ -422,7 +427,7 @@ const getUserChannlProfile = asyncHandler(async (req, res) => {
   ]);
   console.log(channel);
 
-  if (!channel.length()) {
+  if (!channel.length) {
     throw new apiError(404, "Channel does not exist");
   }
   return res
@@ -497,7 +502,6 @@ export {
   updatAccountDetails,
   updateUserAvatar,
   updateUserCoverImage,
-  getUserChannlProfile,
   getUserChannlProfile,
   getWatchHistory,
 };
