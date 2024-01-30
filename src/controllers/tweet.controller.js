@@ -117,11 +117,11 @@ const getUserTweets = asyncHandler(async (req, res) => {
       },
     ]);
     //console.log(tweet);
+    if (!tweet.length) {
+      res.status(200).json(200, [], "No Tweet found");
+    }
     if (!tweet) {
       throw new apiError(404, "Not Found for Database");
-    }
-    if (!tweet.length) {
-      throw new apiError(400, "no tweet Avalable at this time");
     }
     res
       .status(200)
