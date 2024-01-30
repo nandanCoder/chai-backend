@@ -46,7 +46,7 @@ router
 router
   .route("/update-coverImage")
   .post(varifyJWT, upload.single("coverImage"), updateUserCoverImage); // done
-router.route("/channel/:userName").get(getUserChannlProfile); //done
+router.route("/channel/:userName").get(varifyJWT, getUserChannlProfile); //done
 router.route("/weatchHistory").get(varifyJWT, getWatchHistory); //done
 
 export default router;

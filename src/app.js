@@ -21,10 +21,12 @@ app.use(cookieParser()); // ami maj mkane cooke acsec korta par6i sob jay gay
 // routes import
 
 import userRouter from "./routes/user.routes.js";
+import tweetRouter from "./routes/tweet.routers.js";
 // akane  routs sa agar moto hoba na ok akan ala karon ono gay gay taka amara import kora rout nia as6i
 // rout ka anar jono middware anta hoba
 
 app.use("/api/v1/users", userRouter);
+app.use("/api/v1/tweet", tweetRouter);
 
 // http://localhost:8080/api/v1/users/register
 

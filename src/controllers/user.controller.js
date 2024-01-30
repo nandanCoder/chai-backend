@@ -337,7 +337,7 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
   await deleteOnCloudinary(oldUser.coverImageLocalPath);
 
   const user = await User.findByIdAndUpdate(
-    req.body._id,
+    req.user?._id,
     {
       $set: {
         coverImage: coverImage.url,
@@ -442,7 +442,7 @@ const getWatchHistory = asyncHandler(async (req, res) => {
   const user = await User.aggregate([
     {
       $match: {
-        // ata use kora holo kanon pip;ine ae data dairect data base a ajay to aknae moongoose use hoba na to amay string id take object id te convert kora meatch kora te hoba ok
+        // ata use kora holo kanon pipline ae data dairect data base a ajay to aknae moongoose use hoba na to amay string id take object id te convert kora meatch kora te hoba ok
         _id: new mongoose.Types.ObjectId(req.user._id),
       },
     },
