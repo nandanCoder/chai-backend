@@ -356,27 +356,24 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
 //| Aggregation Pipeline Example
 //The following aggregation pipeline example contains two stages and returns the total order quantity .
 
-const getUserChannlProfile = asyncHandler(async (req, res) => {
-  const { userName } = req.params;
-  console.log(userName);
-  if (!userName?.trim()) {
-    throw new apiError(400, "userNAme is missing");
+const getUserChannelProfile = asyncHandler(async (req, res) => {
+  const { username } = req.params;
+
+  if (!username?.trim()) {
+    throw new apiError(400, "username is missing");
   }
+
   const channel = await User.aggregate([
     {
       $match: {
-        // meatch kora6a data
-        userName: userName?.toLowerCase(),
+        username: username?.toLowerCase(),
       },
     },
     {
       $lookup: {
-        // ono fold a gia match kor6a
-        from: "subscriptions", // ja fild ta matech korate chi sata kotaya6a ta akane
-
-        localField: "_id", // local fild
-
-        foreignField: "channel", // ja fild take match korate chi
+        from: "subscriptions",
+        localField: "_id",
+        foreignField: "channel",
         as: "subscribers",
       },
     },
@@ -390,8 +387,6 @@ const getUserChannlProfile = asyncHandler(async (req, res) => {
     },
     {
       $addFields: {
-        // user object a new fild add kora ho6a
-
         subscribersCount: {
           $size: "$subscribers",
         },
@@ -400,10 +395,7 @@ const getUserChannlProfile = asyncHandler(async (req, res) => {
         },
         isSubscribed: {
           $cond: {
-            // condition for chaking amar id ta ar modha a6a ki na
-            if: {
-              $in: [req.user?._id, "$subscribers.subscriber"],
-            },
+            if: { $in: [req.user?._id, "$subscribers.subscriber"] },
             then: true,
             else: false,
           },
@@ -412,30 +404,29 @@ const getUserChannlProfile = asyncHandler(async (req, res) => {
     },
     {
       $project: {
-        //| ja j avlue return korta chi
-
         fullName: 1,
-        avater: 1,
-        coverImage: 1,
         username: 1,
         subscribersCount: 1,
         channelsSubscribedToCount: 1,
         isSubscribed: 1,
+        avatar: 1,
+        coverImage: 1,
         email: 1,
       },
     },
   ]);
-  console.log(channel);
 
-  if (!channel.length) {
-    throw new apiError(404, "Channel does not exist");
+  if (!channel?.length) {
+    throw new apiError(404, "channel does not exists");
   }
+
   return res
     .status(200)
-    .jason(
-      new apiResponse(200, channel[0], "User Chanal featched Successfully")
+    .json(
+      new apiResponse(200, channel[0], "User channel fetched successfully")
     );
 });
+
 //| Aggregation Pipeline
 
 const getWatchHistory = asyncHandler(async (req, res) => {
@@ -443,7 +434,7 @@ const getWatchHistory = asyncHandler(async (req, res) => {
     {
       $match: {
         // ata use kora holo kanon pipline ae data dairect data base a ajay to aknae moongoose use hoba na to amay string id take object id te convert kora meatch kora te hoba ok
-        _id: new mongoose.Types.ObjectId(req.user._id),
+        _id: new mongoose.Types.ObjectId(req.user?._id),
       },
     },
     {
@@ -473,7 +464,7 @@ const getWatchHistory = asyncHandler(async (req, res) => {
           {
             $addFields: {
               owner: {
-                $fast: "owner",
+                $first: "$owner",
               },
             },
           },
@@ -481,9 +472,10 @@ const getWatchHistory = asyncHandler(async (req, res) => {
       },
     },
   ]);
+
   return res
     .status(200)
-    .jason(
+    .json(
       new apiResponse(
         200,
         user[0].watchHistory,
@@ -502,6 +494,6 @@ export {
   updatAccountDetails,
   updateUserAvatar,
   updateUserCoverImage,
-  getUserChannlProfile,
+  getUserChannelProfile,
   getWatchHistory,
 };

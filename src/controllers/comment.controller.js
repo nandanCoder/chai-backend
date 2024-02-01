@@ -82,5 +82,22 @@ const deleteComment = asyncHandler(async (req, res) => {
     throw new apiError(404, " This User is not allowed to exiquet the ");
   }
 });
+const getVideoComments = asyncHandler(async (req, res) => {
+  const { videoId } = req.params;
+  if (!videoId) {
+    throw new apiError(400, "Video Id is required");
+  }
+  try {
+    const comments = await Comment.find(videoId);
 
-export { addComment, deleteComment, updateComment };
+    if (!comments.length) {
+      res.status(200).json(200, {}, "No comment found");
+    }
+
+    res.status(200).json(200, comments, " Comment found successfully");
+  } catch (error) {
+    throw new apiError(404, " Faled to get video comments ??");
+  }
+});
+
+export { addComment, deleteComment, updateComment, getVideoComments };

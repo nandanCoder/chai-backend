@@ -2,7 +2,7 @@ import { Router } from "express";
 import {
   changeCurrentPassword,
   getCurrentUser,
-  getUserChannlProfile,
+  getUserChannelProfile,
   getWatchHistory,
   loginUser,
   logoutUser,
@@ -46,7 +46,7 @@ router
 router
   .route("/update-coverImage")
   .post(varifyJWT, upload.single("coverImage"), updateUserCoverImage); // done
-router.route("/channel/:userName").get(varifyJWT, getUserChannlProfile); //done
-router.route("/weatchHistory").get(varifyJWT, getWatchHistory); //done
+router.route("/channel/:username").get(varifyJWT, getUserChannelProfile); //done
+router.route("/weatch-history").get(varifyJWT, getWatchHistory); //done
 
 export default router;

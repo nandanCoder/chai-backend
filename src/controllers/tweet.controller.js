@@ -3,7 +3,6 @@ import { apiError } from "../utils/apiError.js";
 import { apiResponse } from "../utils/apiResponse.js";
 import { Tweet } from "../models/tweet.models.js";
 import mongoose, { isValidObjectId } from "mongoose";
-import { User } from "../models/user.models.js";
 
 const createTweet = asyncHandler(async (req, res) => {
   const { content } = req.body;

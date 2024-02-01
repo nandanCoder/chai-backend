@@ -4,11 +4,19 @@ import mongooseAggregatePaginate from "mongoose-aggregate-paginate-v2";
 const videoSchema = new Schema(
   {
     videoFile: {
-      type: String, // cloudinary url
+      type: String,
+      required: true,
+    },
+    video_public_id: {
+      type: String,
       required: true,
     },
     thumbnail: {
       type: String, // cloudinary url
+      required: true,
+    },
+    thumbnail_public_id: {
+      type: String,
       required: true,
     },
     title: {
@@ -27,7 +35,7 @@ const videoSchema = new Schema(
       type: Number,
       default: 0,
     },
-    idPublished: {
+    isPublished: {
       type: Boolean,
       default: true,
     },
