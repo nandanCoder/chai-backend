@@ -2,7 +2,7 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { apiError } from "../utils/apiError.js";
 import { apiResponse } from "../utils/apiResponse.js";
 import { Comment } from "../models/comment.models.js";
-import { isValidObjectId } from "mongoose";
+import mongoose, { isValidObjectId } from "mongoose";
 
 const addComment = asyncHandler(async (req, res) => {
   const { content, videoId } = req.body;
@@ -32,8 +32,8 @@ const addComment = asyncHandler(async (req, res) => {
 });
 
 const updateComment = asyncHandler(async (req, res) => {
-  const { id, content } = req.body;
-  if (!isValidObjectId(id)) {
+  const { commentId, content } = req.body;
+  if (!isValidObjectId(commentId)) {
     throw new apiError(301, "Invalid mongoose ObjectId id");
   }
   if (!content) {
@@ -42,7 +42,7 @@ const updateComment = asyncHandler(async (req, res) => {
   try {
     const comment = await Comment.findOneAndUpdate(
       {
-        _id: id,
+        _id: commentId,
         owner: req.user?._id,
       },
       {
@@ -57,7 +57,9 @@ const updateComment = asyncHandler(async (req, res) => {
     if (!comment) {
       throw new apiError(404, " comment not updated ");
     }
-    res.status(200).json(200, comment, "comment updated successfully !!");
+    res
+      .status(200)
+      .json(new apiResponse(200, comment, "comment updated successfully !!"));
   } catch (error) {
     throw new apiError(
       404,
@@ -68,7 +70,7 @@ const updateComment = asyncHandler(async (req, res) => {
 });
 
 const deleteComment = asyncHandler(async (req, res) => {
-  const { id } = eq.params;
+  const { id } = req.params;
   if (!id) {
     throw new apiError(400, " comment ID is required");
   }
@@ -77,7 +79,9 @@ const deleteComment = asyncHandler(async (req, res) => {
       _id: id,
       owner: req.user?._id,
     });
-    res.status(200).json(200, {}, "comment deleted successfully");
+    res
+      .status(200)
+      .json(new apiResponse(200, {}, "comment deleted successfully"));
   } catch (error) {
     throw new apiError(404, " This User is not allowed to exiquet the ");
   }
@@ -88,13 +92,45 @@ const getVideoComments = asyncHandler(async (req, res) => {
     throw new apiError(400, "Video Id is required");
   }
   try {
-    const comments = await Comment.find(videoId);
+    const comments = await Comment.aggregate([
+      {
+        $match: {
+          videoId: new mongoose.Types.ObjectId(videoId),
+        },
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "owner",
+          foreignField: "_id",
+          as: "owner",
+          pipeline: [
+            {
+              $project: {
+                username: 1,
+                fullName: 1,
+                avater: 1,
+              },
+            },
+          ],
+        },
+      },
+      {
+        $addFields: {
+          owner: {
+            $first: "$owner",
+          },
+        },
+      },
+    ]);
 
     if (!comments.length) {
       res.status(200).json(200, {}, "No comment found");
     }
 
-    res.status(200).json(200, comments, " Comment found successfully");
+    res
+      .status(200)
+      .json(new apiResponse(200, comments, " Comment found successfully"));
   } catch (error) {
     throw new apiError(404, " Faled to get video comments ??");
   }

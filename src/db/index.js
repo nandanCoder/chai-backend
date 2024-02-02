@@ -11,7 +11,7 @@ const connectDB = async () => {
       `\n Mongo DB Connected to || DB HOST: ${connectionInstance.connection.host}`
     );
   } catch (error) {
-    console.log("MONGODB CONNECTION ERROR: " + error);
+    console.log("MONGODB CONNECTION ERROR:: " + error);
     process.exit(1); // process.exit is a syntex on javascript
   }
 };

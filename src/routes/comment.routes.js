@@ -10,9 +10,9 @@ import {
 const router = Router();
 
 router.use(varifyJWT); // for all route
-
-router.route("/:videoId").get(getVideoComments).post(addComment);
+router.route("/add-comment").post(addComment);
+router.route("/:videoId").get(getVideoComments);
 router.route("/delete/:id").get(deleteComment);
-router.route("update-comment").post(updateComment);
+router.route("/update-comment").post(updateComment);
 
 export default router;
