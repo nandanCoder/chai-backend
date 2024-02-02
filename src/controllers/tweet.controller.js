@@ -108,7 +108,25 @@ const getUserTweets = asyncHandler(async (req, res) => {
         },
       },
       {
+        $lookup: {
+          from: "likes",
+          localField: "_id",
+          foreignField: "tweet",
+          as: "total_likes",
+        },
+      },
+      {
         $addFields: {
+          total_likes: {
+            $size: "$total_likes",
+          },
+          isLiked: {
+            $cond: {
+              if: { $in: [req.user?._id, "$total_likes.likedBy"] },
+              then: true,
+              else: false,
+            },
+          },
           owner_details: {
             $first: "$owner_details",
           },

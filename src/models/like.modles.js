@@ -3,8 +3,8 @@ import mongoose, { Schema } from "mongoose";
 const likeSchema = new Schema(
   {
     comment: {
-      type: String,
-      required: true,
+      type: Schema.Types.ObjectId,
+      ref: "Comment",
     },
     video: {
       type: Schema.Types.ObjectId,

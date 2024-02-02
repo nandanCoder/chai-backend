@@ -55,6 +55,7 @@ const publishVideo = asyncHandler(async (req, res) => {
   }
 });
 const getAllVideos = asyncHandler(async (req, res) => {
+  // page option
   const allVideos = await Video.aggregate([
     {
       $match: { isPublished: true },
@@ -77,7 +78,18 @@ const getAllVideos = asyncHandler(async (req, res) => {
       },
     },
     {
+      $lookup: {
+        from: "likes",
+        localField: "_id",
+        foreignField: "video",
+        as: "total_likes",
+      },
+    },
+    {
       $addFields: {
+        total_likes: {
+          $size: "$total_likes",
+        },
         owner: {
           $first: "$owner",
         },
@@ -122,7 +134,25 @@ const getVideoById = asyncHandler(async (req, res) => {
         },
       },
       {
+        $lookup: {
+          from: "likes",
+          localField: "_id",
+          foreignField: "video",
+          as: "total_likes",
+        },
+      },
+      {
         $addFields: {
+          total_likes: {
+            $size: "$total_likes",
+          },
+          isLiked: {
+            $cond: {
+              if: { $in: [req.user?._id, "$total_likes.likedBy"] },
+              then: true,
+              else: false,
+            },
+          },
           owner: {
             $first: "$owner",
           },
