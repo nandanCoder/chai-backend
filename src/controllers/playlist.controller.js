@@ -57,18 +57,13 @@ const getUserPlaylists = asyncHandler(async (req, res) => {
       {
         $lookup: {
           from: "videos",
-          localField: "video",
+          localField: "videos",
           foreignField: "_id",
-          as: "video_details",
+          as: "playlist_banner",
           pipeline: [
             {
               $project: {
-                owner: 1,
-                duration: 1,
-                description: 1,
-                title: 1,
                 thumbnail: 1,
-                videoFile: 1,
               },
             },
           ],
@@ -76,8 +71,8 @@ const getUserPlaylists = asyncHandler(async (req, res) => {
       },
       {
         $addFields: {
-          video_details: {
-            $first: "$video_details",
+          playlist_banner: {
+            $first: "$playlist_banner",
           },
         },
       },
@@ -94,6 +89,84 @@ const getUserPlaylists = asyncHandler(async (req, res) => {
 
 const getPlaylistById = asyncHandler(async (req, res) => {
   const { playlistId } = req.params;
+  if (!isValidObjectId(playlistId)) {
+    throw new apiError(404, "Invalid playlist id");
+  }
+  const owner = await isUserOwnerofPlaylist(playlistId, req.user?._id);
+  if (!owner) {
+    throw new apiError(
+      500,
+      "Unable to get playlist for this  owner:: Unotorized "
+    );
+  }
+  try {
+    const playlist = await Playlist.aggregate([
+      {
+        $match: {
+          _id: new mongoose.Types.ObjectId(playlistId),
+        },
+      },
+      //|if the user is owner then he can see the playlist with the unpublished video of himself
+      //|but others can see the published video only
+      {
+        $project: {
+          name: 1,
+          description: 1,
+          createdAt: 1,
+          updatedAt: 1,
+          owner: 1,
+          videosId: {
+            $cond: {
+              if: {
+                $eq: ["$owner", new mongoose.Types.ObjectId(req.user?._id)],
+              },
+              then: "$videos",
+              else: {
+                //| i filter out the un published video
+                $filter: {
+                  input: "$videos",
+                  as: "video",
+                  cond: {
+                    $eq: ["$videos.isPublished", true],
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      {
+        $lookup: {
+          from: "videos",
+          foreignField: "_id",
+          localField: "videosId",
+          as: "videos",
+          pipeline: [
+            {
+              $project: {
+                views: 1,
+                duration: 1,
+                description: 1,
+                title: 1,
+                thumbnail: 1,
+                videoFile: 1,
+                owner: 1,
+              },
+            },
+          ],
+        },
+      },
+    ]);
+
+    if (!playlist) {
+      throw new apiError(404, "Playlist Not Found");
+    }
+    return res
+      .status(200)
+      .json(new apiResponse(200, playlist, "Playlist Fetched Successfully"));
+  } catch (error) {
+    throw new apiError(500, error.message || "Unable to get playlist");
+  }
 });
 
 const addVideoToPlaylist = asyncHandler(async (req, res) => {
@@ -116,6 +189,9 @@ const addVideoToPlaylist = asyncHandler(async (req, res) => {
     }
 
     const video = await Video.findById(videoId);
+    //console.log(video);
+
+    console.log(video?.owner !== req.user?._id && video?.isPublished);
 
     if (!video || (video?.owner !== req.user?._id && !video?.isPublished)) {
       throw new apiError(404, "Video Not Found");

@@ -226,6 +226,10 @@ const togglePublishStatus = asyncHandler(async (req, res) => {
   if (!id) {
     throw new apiError(400, " value must be provided");
   }
+  const video = await Video.findById(id);
+  if (!video) {
+    throw new apiError(400, "Video not found");
+  }
   try {
     const updatedVideo = await Video.findOneAndUpdate(
       {
@@ -234,7 +238,7 @@ const togglePublishStatus = asyncHandler(async (req, res) => {
       },
       {
         $set: {
-          isPublished: false,
+          isPublished: !video.isPublished,
         },
       },
       {
