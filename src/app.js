@@ -26,6 +26,7 @@ import commentRouter from "./routes/comment.routes.js";
 import videoRouter from "./routes/video.routes.js";
 import likeRouter from "./routes/like.routes.js";
 import playlistRouter from "./routes/playlist.routes.js";
+import dashboardRouter from "./routes/dashboard.routes.js";
 // akane  routs sa agar moto hoba na ok akan ala karon ono gay gay taka amara import kora rout nia as6i
 // rout ka anar jono middware anta hoba
 
@@ -35,7 +36,7 @@ app.use("/api/v1/comment", commentRouter);
 app.use("/api/v1/video", videoRouter);
 app.use("/api/v1/like", likeRouter);
 app.use("/api/v1/playlist", playlistRouter);
-
+app.use("/api/v1/dashboard", dashboardRouter);
 // http://localhost:8080/api/v1/users/register
 
 export { app };
