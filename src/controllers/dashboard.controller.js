@@ -62,11 +62,26 @@ const getChannelStats = asyncHandler(async (req, res) => {
       },
     },
   ]);
+  if (!channelStats) {
+    throw new apiError(404, "Channel Stats not found ");
+  }
   res.status(200).json(new apiResponse(200, channelStats));
 });
 
 const getChannelVideos = asyncHandler(async (req, res) => {
-  // TODO: Get all the videos uploaded by the channel
+  try {
+    const videos = await Video.find({ owner: req.user?._id });
+    if (!videos || videos.length === 0) {
+      return res
+        .status(200)
+        .json(new ApiResponse(200, videos, "No video published yet"));
+    }
+    return res
+      .status(200)
+      .json(new ApiResponse(200, videos, "All videos fetched"));
+  } catch (error) {
+    throw new apiError(404, error.message || "somthing error");
+  }
 });
 
 export { getChannelStats, getChannelVideos };
